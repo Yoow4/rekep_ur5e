@@ -16,7 +16,15 @@ def encode_image(image_path):
 class ConstraintGenerator:
     def __init__(self, config):
         self.config = config
-        self.client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+        # OPENAI
+        # self.client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+
+        #QWENVL
+        self.client = OpenAI(
+            api_key=os.getenv("DASHSCOPE_API_KEY"),
+            base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+        )
+
         self.base_dir = './vlm_query'
         with open(os.path.join(self.base_dir, 'prompt_template.txt'), 'r') as f:
             self.prompt_template = f.read()
