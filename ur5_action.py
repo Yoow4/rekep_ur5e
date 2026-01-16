@@ -118,6 +118,7 @@ class UR5Controller:
             self._execute_action_sequence(next_path)
             
             # Check if stage is complete and handle stage transitions
+            #先看当前阶段是否完成，再判断是否是抓取或释放阶段
             if self._is_stage_complete():
                 if self._handle_stage_completion():
                     break  # Task completed
@@ -137,6 +138,7 @@ class UR5Controller:
     def _setup_task_environment(self):
         """Setup task environment variables"""
         # Keypoint movable mask - tracks which keypoints can be moved
+        #先假设全都不能动，只有末端执行器能动
         self.keypoint_movable_mask = np.zeros(self.program_info['num_keypoints'] + 1, dtype=bool)
         self.keypoint_movable_mask[0] = True  # End effector is always movable
         
@@ -348,16 +350,24 @@ class UR5Controller:
         
         # Reset stage variables
         self.action_queue = []
-        self._update_keypoint_movable_mask()
+        self._update_keypoint_movable_mask()#现在所有关键点都会标记可动
         self.first_iter = True
         
         print(f"Updated to stage {stage} - Grasp: {self.is_grasp_stage}, Release: {self.is_release_stage}")
     
+    #目前这个函数没有实际作用，全部都会标注为可移动
+    ###
+    # 假如要修复，正确的逻辑应该是：
+    # 1.get_object_by_keypoint: 应该通过视觉算法（如分割掩码 Mask 或聚类）判断第 i 个关键点属于“红色笔”还是“蓝色杯子”。
+    # 2. is_grasping: 应该判断当前夹爪的位置是否和“红色笔”的几何位置重叠，且夹爪力传感器有反馈。
+    # 3. 结果: 只有被抓住的那个物体的关键点返回 True，背景物体返回 False。
+    ###
     def _update_keypoint_movable_mask(self):
         """Update which keypoints can be moved in optimization"""
         for i in range(1, len(self.keypoint_movable_mask)):
             keypoint_object = self.env.get_object_by_keypoint(i - 1)
             self.keypoint_movable_mask[i] = self.env.is_grasping(keypoint_object)
+    
     
     def _return_to_initial_position(self):
         """Return robot to initial position after task completion"""
