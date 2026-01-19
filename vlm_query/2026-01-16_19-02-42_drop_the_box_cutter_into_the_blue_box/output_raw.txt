@@ -1,0 +1,52 @@
+```python
+# The task "Drop the box cutter into the blue box" involves:
+# - Stage 1: Grasp the box cutter (must be independent)
+# - Stage 2: Move and drop the box cutter into the blue box
+# So there are 2 stages total.
+
+num_stages = 2
+
+### stage 1 sub-goal constraints
+def stage1_subgoal_constraint1(end_effector, keypoints):
+    """Align end-effector with keypoint 0 (tip of box cutter) to grasp it."""
+    # Grasp at tip (keypoint 0) — typical for tools like box cutters
+    cost = np.linalg.norm(end_effector - keypoints[0])
+    return cost
+# No path constraints for grasping stage (per instructions: only one sub-goal constraint per stage, no path constraints in grasping stage)
+
+### stage 2 sub-goal constraints
+def stage2_subgoal_constraint1(end_effector, keypoints):
+    """Position end-effector above the center of the blue box opening (average of keypoints 2,3,4) at a height suitable for dropping."""
+    # Blue box interior corners: keypoints 2 (top-left), 3 (bottom-left), 4 (bottom-right)
+    # Assume top-right corner is not labeled but box is rectangular; center of opening ≈ mean of 2,3,4 plus offset for symmetry.
+    # Since 2,3,4 form three corners of rectangle, center = (2 + 4)/2 if 2 and 4 are diagonally opposite — but here 2 and 4 are not diagonal.
+    # Better: use keypoints 2,3,4 to estimate center: average of all three gives approximate center of L-shape; or assume box is axis-aligned and use midpoint between 2 and 4 (if 2=top-left, 4=bottom-right).
+    # From image: 2 is top-left interior, 3 is bottom-left interior, 4 is bottom-right interior → so top-right interior is missing, but center ≈ (keypoints[2] + keypoints[4]) / 2
+    box_center = (keypoints[2] + keypoints[4]) / 2
+    # Drop height: end-effector should be just above box opening, e.g., 5 cm (0.05 m) above the box plane (z-coordinate of box interior ~ same as keypoints)
+    # Since all keypoints lie on table surface (z ≈ constant), we keep x,y aligned to box_center, and z slightly above.
+    target_pos = np.array([box_center[0], box_center[1], box_center[2] + 0.05])
+    cost = np.linalg.norm(end_effector - target_pos)
+    return cost
+
+### stage 2 path constraints
+def stage2_path_constraint1(end_effector, keypoints):
+    """Robot must still be grasping the box cutter (keypoint 0) during transport."""
+    return get_grasping_cost_by_keypoint_idx(0)
+
+"""
+Summarize keypoints to be grasped in all grasping stages.
+The length of the list should be equal to the number of stages.
+For grasping stage, write the keypoint index. For non-grasping stage, write -1.
+"""
+grasp_keypoints = [0, -1]
+
+"""
+Summarize at **the end of which stage** the robot should release the keypoints.
+The keypoint indices must appear in an earlier stage as defined in `grasp_keypoints` (i.e., a keypoint can only be released only if it has been grasped previously).
+Only release object when it's necessary to complete the task, e.g., drop bouquet in the vase.
+The length of the list should be equal to the number of stages.
+If a keypoint is to be released at the end of a stage, write the keypoint index at the corresponding location. Otherwise, write -1.
+"""
+release_keypoints = [-1, 0]
+```

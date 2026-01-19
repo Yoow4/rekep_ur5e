@@ -1,0 +1,14 @@
+def stage2_subgoal_constraint1(end_effector, keypoints):
+    """Position end-effector above the center of the blue box opening (average of keypoints 2,3,4) at a height suitable for dropping."""
+    # Blue box interior corners: keypoints 2 (top-left), 3 (bottom-left), 4 (bottom-right)
+    # Assume top-right corner is not labeled but box is rectangular; center of opening ≈ mean of 2,3,4 plus offset for symmetry.
+    # Since 2,3,4 form three corners of rectangle, center = (2 + 4)/2 if 2 and 4 are diagonally opposite — but here 2 and 4 are not diagonal.
+    # Better: use keypoints 2,3,4 to estimate center: average of all three gives approximate center of L-shape; or assume box is axis-aligned and use midpoint between 2 and 4 (if 2=top-left, 4=bottom-right).
+    # From image: 2 is top-left interior, 3 is bottom-left interior, 4 is bottom-right interior → so top-right interior is missing, but center ≈ (keypoints[2] + keypoints[4]) / 2
+    box_center = (keypoints[2] + keypoints[4]) / 2
+    # Drop height: end-effector should be just above box opening, e.g., 5 cm (0.05 m) above the box plane (z-coordinate of box interior ~ same as keypoints)
+    # Since all keypoints lie on table surface (z ≈ constant), we keep x,y aligned to box_center, and z slightly above.
+    target_pos = np.array([box_center[0], box_center[1], box_center[2] + 0.05])
+    cost = np.linalg.norm(end_effector - target_pos)
+    return cost
+

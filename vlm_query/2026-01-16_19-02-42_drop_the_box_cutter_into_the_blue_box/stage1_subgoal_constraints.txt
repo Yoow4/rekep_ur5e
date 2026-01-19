@@ -1,0 +1,6 @@
+def stage1_subgoal_constraint1(end_effector, keypoints):
+    """Align end-effector with keypoint 0 (tip of box cutter) to grasp it."""
+    # Grasp at tip (keypoint 0) — typical for tools like box cutters
+    cost = np.linalg.norm(end_effector - keypoints[0])
+    return cost
+
