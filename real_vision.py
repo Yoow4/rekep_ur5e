@@ -74,10 +74,10 @@ class R2D2Vision:
         # D435 default 
         class D435_Intrinsics:
             def __init__(self):
-                self.fx = 616.57  # focal length x
-                self.fy = 616.52  # focal length y
-                self.ppx = 322.57   # principal point x
-                self.ppy = 246.28   # principal point y
+                self.fx = 612.51  # focal length x
+                self.fy = 612.75  # focal length y
+                self.ppx = 317.73  # principal point x
+                self.ppy = 252.04   # principal point y
         # D435i default 
         class D435i_Intrinsics:
             def __init__(self):
@@ -200,7 +200,10 @@ if __name__ == "__main__":
         # args.instruction = "Pick up the game controller from the tall box and put it outside, drop the marker into the tall box, then drop the plug into the tall box。"
         # args.instruction = "Drop the marker pen into the blue box."
         # args.instruction = "Drop the tape measure into the blue box."
-        args.instruction = "Drop the box cutter into the blue box."
+        # args.instruction = "Drop the box cutter into the blue box."
+        # args.instruction = "Place the water cup in the box."
+        # args.instruction = "The thermos was placed in the black recess."
+        args.instruction = "Place the thermos on the gray tray, keeping it 5cm away from the table when you put it down."
         # args.instruction = "Grab the game controller."
         # args.instruction = "Brew a cup of espresso."
         # args.instruction = "Put down the green package into drawer."

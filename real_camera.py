@@ -20,7 +20,7 @@ pipeline = rs.pipeline()
 config = rs.config()
 
 # 指定要使用的相机序列号
-target_serial = "819612070593"
+target_serial = "828112071426"#TODO
 config.enable_device(target_serial)
 
 # Get device product line for setting a supporting resolution

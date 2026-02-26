@@ -200,11 +200,39 @@ class RobotController:
         
         # Create rotation matrix and apply offset
         rotation_matrix = R.from_quat(quat).as_matrix()
-        z_offset = np.array([0, 0, 0.16])  # Offset along z-axis
+        z_offset = np.array([0.06, -0.025, 0.155])  # Offset along z-axis
         z_offset_world = rotation_matrix @ z_offset
         
         pose[:3] = position - z_offset_world
         return pose
+
+    # def _apply_grasp_offset(self, pose):
+    #     """Apply grasp offset (compensate fixed transform: flange -> gripper/TCP)"""
+    #     # 目标夹爪(TCP)位姿（世界系）
+    #     target_tcp_pos = pose[:3].copy()
+    #     target_tcp_quat = pose[3:7].copy()  # [x, y, z, w]
+
+    #     r_world_tcp = R.from_quat(target_tcp_quat)
+
+    #     # 固定外参：法兰 -> TCP（来自 tf_echo）
+    #     # Rotation: Quaternion [x, y, z, w]
+    #     q_flange_tcp = np.array([0.005, 0.003, -0.399, 0.917], dtype=float)
+    #     q_flange_tcp = q_flange_tcp / np.linalg.norm(q_flange_tcp)  # 归一化更稳
+    #     r_flange_tcp = R.from_quat(q_flange_tcp)
+
+    #     # 固定平移（法兰系下，单位米）
+    #     # 若你后续测得更准确值，直接改这里
+    #     t_flange_tcp = np.array([0.0, 0.0, 0.15], dtype=float)
+
+    #     # 由 T_world_tcp 反解 T_world_flange:
+    #     # R_w_f = R_w_tcp * (R_f_tcp)^(-1)
+    #     # t_w_f = t_w_tcp - R_w_f * t_f_tcp
+    #     r_world_flange = r_world_tcp * r_flange_tcp.inv()
+    #     t_world_flange = target_tcp_pos - r_world_flange.apply(t_flange_tcp)
+
+    #     pose[:3] = t_world_flange
+    #     pose[3:7] = r_world_flange.as_quat()
+    #     return pose
 
     def _generate_path(self, subgoal):
         """Generate path"""

@@ -100,6 +100,88 @@ class UR5IKSolver:
         """
         # Placeholder - implement actual FK
         return np.eye(4)
+    
+class UR5eIKSolver:
+    """UR5e IK Solver"""
+    def __init__(self, reset_joint_pos, world2robot_homo=None):
+        # DH parameters for UR5e
+        self.dh_params = {
+        # Standard DH parameters for UR5e / UR7e
+        # [a, alpha, d, theta]
+        1: [0,        np.pi/2,   0.1625,  0],   # Joint 1
+        2: [-0.425,   0,         0,       0],   # Joint 2
+        3: [-0.3922,  0,         0,       0],   # Joint 3
+        4: [0,        np.pi/2,   0.1333,  0],   # Joint 4
+        5: [0,       -np.pi/2,   0.0997,  0],   # Joint 5
+        6: [0,        0,         0.0996,  0],   # Joint 6
+    }
+        
+        # Joint limits (in radians) for UR5
+        self.joint_limits = {
+            'lower': np.array([-2*np.pi, -2*np.pi, -2*np.pi, -2*np.pi, -2*np.pi, -2*np.pi]),
+            'upper': np.array([2*np.pi, 2*np.pi, 2*np.pi, 2*np.pi, 2*np.pi, 2*np.pi])
+        }
+        
+        self.reset_joint_pos = reset_joint_pos
+        self.world2robot_homo = world2robot_homo if world2robot_homo is not None else np.eye(4)
+
+    def transform_pose(self, pose_homo):
+        """Transform pose from world frame to robot base frame"""
+        return np.dot(self.world2robot_homo, pose_homo)
+    
+    def solve(self, target_pose_homo, 
+             position_tolerance=0.01,
+             orientation_tolerance=0.05,
+             max_iterations=150,
+             initial_joint_pos=None):
+        """
+        Mock IK solver that returns a valid IKResult
+        """
+        # Transform target pose to robot base frame
+        robot_pose = self.transform_pose(target_pose_homo)
+        
+        # Extract position and rotation
+        target_pos = robot_pose[:3, 3]
+        target_rot = robot_pose[:3, :3]
+        
+        # Use initial joint positions or default
+        if initial_joint_pos is None:
+            initial_joint_pos = self.reset_joint_pos
+        
+        # 简单的工作空间检查
+        in_workspace = np.all(np.abs(target_pos) < 1.0)
+        
+        if 1: #in_workspace:
+            # 成功情况
+            return IKResult(
+                success=True,
+                joint_positions=initial_joint_pos,  # 使用初始关节角度或默认值
+                error_pos=0.01,
+                error_rot=0.01,
+                num_descents=max_iterations // 2
+            )
+        else:
+            # 失败情况，但仍然返回一个有效的IKResult
+            return IKResult(
+                success=False,
+                joint_positions=self.reset_joint_pos,  # 使用重置位置
+                error_pos=1.0,
+                error_rot=1.0,
+                num_descents=max_iterations
+            )
+    
+    def forward_kinematics(self, joint_positions):
+        """
+        Compute forward kinematics (placeholder)
+        
+        Args:
+            joint_positions (array): Joint angles
+            
+        Returns:
+            4x4 array: Homogeneous transformation matrix
+        """
+        # Placeholder - implement actual FK
+        return np.eye(4)
 
 # Unit tests
 def test_ur5_ik():

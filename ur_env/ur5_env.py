@@ -6,14 +6,16 @@ from rtde_control import RTDEControlInterface
 from rtde_receive import RTDEReceiveInterface
 from ur_env.rotations import rotvec_2_quat, quat_2_rotvec, pose2rotvec, pose2quat
 import time
+import os
+import subprocess
 
 class RobotEnv:
-    def __init__(self, ip='192.168.1.60'):
+    def __init__(self, ip='192.168.1.102'):
         # 初始化真实机械臂环境   
         self.ip = ip
 
         # 初始化机械臂
-        self.robot = ur5Robot(ip)
+        self.robot = ur5eRobot(ip)
         
     def execute_action(self, action, precise=False, speed=0.08, acceleration=0.08):
         """
@@ -87,8 +89,8 @@ class RobotEnv:
         """Wait for specified duration"""
         time.sleep(seconds)
 
-class ur5Robot:
-    def __init__(self, ip='192.168.1.60'):
+class ur5eRobot:
+    def __init__(self, ip='192.168.1.102'):
         # 连接机器人
         self.ip = ip
 
@@ -162,43 +164,56 @@ class ur5Robot:
         finally:
             rtde_control.stopScript()
 
-    def control_gripper(self, width=0, speed=30, force=100, close=True):
-        """
-        Controls the Robotiq two-finger parallel gripper.
+    # def control_gripper(self, width=0, speed=30, force=100, close=True):
+    #     """
+    #     Controls the Robotiq two-finger parallel gripper.
 
-        :param width: Target width of the gripper (0 for fully closed, 255 for fully open).
-        :param speed: Speed of the gripper movement (default: 30).
-        :param force: Force applied by the gripper (default: 100).
-        :param close: Whether to close (True) or open (False) the gripper.
-        """
-        async def execute_gripper_commands():
-            gripper = VacuumGripper(self.ip)
-            await gripper.connect()
-            await gripper.activate()
-            if close:
-                await gripper.close_gripper(force=force, speed=speed)
-                print("Gripper closed.")
-            else:
-                await gripper.open_gripper(force=force, speed=speed)
-                print("Gripper opened.")
-            await gripper.disconnect()
+    #     :param width: Target width of the gripper (0 for fully closed, 255 for fully open).
+    #     :param speed: Speed of the gripper movement (default: 30).
+    #     :param force: Force applied by the gripper (default: 100).
+    #     :param close: Whether to close (True) or open (False) the gripper.
+    #     """
+    #     async def execute_gripper_commands():
+    #         gripper = VacuumGripper(self.ip)
+    #         await gripper.connect()
+    #         await gripper.activate()
+    #         if close:
+    #             await gripper.close_gripper(force=force, speed=speed)
+    #             print("Gripper closed.")
+    #         else:
+    #             await gripper.open_gripper(force=force, speed=speed)
+    #             print("Gripper opened.")
+    #         await gripper.disconnect()
+
+    #     try:
+    #         # Get the current running event loop or create a new one
+    #         try:
+    #             loop = asyncio.get_running_loop()
+    #         except RuntimeError:
+    #             loop = asyncio.new_event_loop()
+    #             asyncio.set_event_loop(loop)
+
+    #         # Run the asynchronous function in the loop
+    #         if loop.is_running():
+    #             asyncio.ensure_future(execute_gripper_commands())
+    #         else:
+    #             loop.run_until_complete(execute_gripper_commands())
+
+    #     except Exception as e:
+    #         print("Error controlling gripper:", e)
+
+    
+
+    def control_gripper(self, close: bool):
+        BASE_DIR = "/home/hyw/hyw/code/device_can/src"
+        executable = "close_gripper" if close else "open_gripper"
+        cmd = os.path.join(BASE_DIR, executable)
 
         try:
-            # Get the current running event loop or create a new one
-            try:
-                loop = asyncio.get_running_loop()
-            except RuntimeError:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-
-            # Run the asynchronous function in the loop
-            if loop.is_running():
-                asyncio.ensure_future(execute_gripper_commands())
-            else:
-                loop.run_until_complete(execute_gripper_commands())
-
-        except Exception as e:
-            print("Error controlling gripper:", e)
+            subprocess.run([cmd], check=True)
+            print(f"Gripper {'closed' if close else 'opened'}.")
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to control gripper: {e}")
 
     def get_tcp_pose(self):
         """
