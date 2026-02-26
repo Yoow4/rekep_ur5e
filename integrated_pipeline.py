@@ -33,7 +33,7 @@ from rekep.utils import bcolors, get_config
 # 机器人控制相关导入
 from ur_env.rotations import pose2quat, quat_2_rotvec
 from rekep.environment import R2D2Env
-from rekep.ik_solver import UR5IKSolver
+from rekep.ik_solver import UR5eIKSolver
 from rekep.subgoal_solver import SubgoalSolver
 from rekep.path_solver import PathSolver
 from rekep.visualizer import Visualizer
@@ -97,7 +97,7 @@ class IntegratedRobotPipeline:
         config = rs.config()
         
         # 指定相机序列号
-        target_serial = "819612070593"
+        target_serial = "828112071426"
         config.enable_device(target_serial)
         
         # 检查RGB相机
@@ -228,10 +228,10 @@ class IntegratedRobotPipeline:
         # D435默认内参
         class D435_Intrinsics:
             def __init__(self):
-                self.fx = 616.57
-                self.fy = 616.52
-                self.ppx = 322.57
-                self.ppy = 246.28
+                self.fx = 612.51  # focal length x
+                self.fy = 612.75  # focal length y
+                self.ppx = 317.73  # principal point x
+                self.ppy = 252.04   # principal point y
         
         intrinsics = D435_Intrinsics()
         depth_scale = 0.001
@@ -276,12 +276,16 @@ class IntegratedRobotPipeline:
         
         # 默认重置关节位置
         self.reset_joint_pos = np.array([
-            -0.023413960133687794, -1.9976251761065882, 1.7851085662841797,
-            4.942904949188232, -1.5486105124102991, -1.5801880995379847
+           5.175394535064697, 
+                        -1.5485423629036923, 
+                        -1.7007479667663574, 
+                        -1.4648994889906426, 
+                        1.5775022506713867, 
+                        -1.8168037573443812
         ])
         
         # IK求解器
-        ik_solver = UR5IKSolver(
+        ik_solver = UR5eIKSolver(
             reset_joint_pos=self.reset_joint_pos,
             world2robot_homo=self.env.world2robot_homo,
         )
@@ -418,7 +422,11 @@ class IntegratedRobotPipeline:
         quat = pose[3:7]
         
         rotation_matrix = R.from_quat(quat).as_matrix()
-        z_offset = np.array([0, 0, 0.16])
+        ###按照实际情况调整偏移
+        # z_offset = np.array([0.03, -0.005, 0.155])
+        z_offset = np.array([0.02, -0.005, 0.155])
+        # z_offset = np.array([0, 0, 0.155])
+        
         z_offset_world = rotation_matrix @ z_offset
         
         pose[:3] = position - z_offset_world
@@ -702,7 +710,7 @@ def main():
     """主函数"""
     parser = argparse.ArgumentParser(description='整合的机器人操作流水线')
     parser.add_argument('--instruction', type=str, 
-                       default="Drop the box cutter into the blue box.",
+                       default="把水杯放到托盘里.",
                        help='任务指令')
     parser.add_argument('--save_poses', action='store_true', 
                        default=True, help='保存末端执行器pose')

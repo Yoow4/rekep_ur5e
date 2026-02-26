@@ -8,7 +8,7 @@ from ur_env.rotations import pose2quat, quat_2_rotvec
 import argparse
 
 from rekep.environment import R2D2Env
-from rekep.ik_solver import UR5IKSolver
+from rekep.ik_solver import UR5eIKSolver
 from rekep.subgoal_solver import SubgoalSolver
 from rekep.path_solver import PathSolver
 from rekep.visualizer import Visualizer
@@ -55,12 +55,16 @@ class UR5Controller:
         
         # Default reset joint positions for UR5
         self.reset_joint_pos = np.array([
-            -0.023413960133687794, -1.9976251761065882, 1.7851085662841797, 
-            4.942904949188232, -1.5486105124102991, -1.5801880995379847
+           5.175394535064697, 
+                        -1.5485423629036923, 
+                        -1.7007479667663574, 
+                        -1.4648994889906426, 
+                        1.5775022506713867, 
+                        -1.8168037573443812
         ])
         
         # IK solver
-        ik_solver = UR5IKSolver(
+        ik_solver = UR5eIKSolver(
             reset_joint_pos=self.reset_joint_pos,
             world2robot_homo=self.env.world2robot_homo,
         )
@@ -209,7 +213,7 @@ class UR5Controller:
         
         # Create rotation matrix and apply offset
         rotation_matrix = R.from_quat(quat).as_matrix()
-        z_offset = np.array([0, 0, 0.16])  # 16cm offset along z-axis
+        z_offset = np.array([0.06, -0.03, 0.155])  # 16cm offset along z-axis
         z_offset_world = rotation_matrix @ z_offset
         
         pose[:3] = position - z_offset_world
