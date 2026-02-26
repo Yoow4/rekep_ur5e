@@ -1,5 +1,6 @@
 from dds_cloudapi_sdk import Config, Client
 from dds_cloudapi_sdk.tasks.v2_task import V2Task
+from dds_cloudapi_sdk.image_resizer import image_to_base64
 
 import os
 import numpy as np
@@ -24,11 +25,11 @@ class GroundingDINO:
         self.client = Client(config)
     
     def get_dinox(self, image_path):
-        image_url = self.client.upload_file(image_path)
+        img_str = image_to_base64(image_path)
         task = V2Task(api_path="/v2/task/dinox/detection", 
         api_body={
         "model": "DINO-X-1.0",
-        "image": image_url,
+        "image": img_str,
         "prompt": {
             "type":"universal",
         },

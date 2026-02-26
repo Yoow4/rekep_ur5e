@@ -101,8 +101,29 @@ class ConstraintGenerator:
             raise ValueError("grasp_keypoints not found in output")
         # convert into list of ints
         grasp_keypoints = grasp_keypoints['grasp_keypoints'].replace("[", "").replace("]", "").split(",")
-        grasp_keypoints = [int(x.strip()) for x in grasp_keypoints]
-        data_dict['grasp_keypoints'] = grasp_keypoints
+        
+        parsed_grasp_keypoints = []
+        for x in grasp_keypoints:
+            # 清理字符串
+            clean_x = x.split('#')[0].strip().lower()
+            if not clean_x or clean_x == 'none':
+                parsed_grasp_keypoints.append(-1)
+            else:
+                try:
+                    # 尝试直接转换
+                    parsed_grasp_keypoints.append(int(clean_x))
+                except ValueError:
+                    # 如果包含文字（如 'none in stage 2'），尝试提取其中的第一个数字
+                    import re
+                    match = re.search(r'-?\d+', clean_x)
+                    if match:
+                        parsed_grasp_keypoints.append(int(match.group()))
+                    else:
+                        # 如果完全找不到数字，默认为 -1
+                        parsed_grasp_keypoints.append(-1)
+                        
+        data_dict['grasp_keypoints'] = parsed_grasp_keypoints
+        
         # find release_keypoints
         release_keypoints_template = "release_keypoints = {release_keypoints}"
         for line in output.split("\n"):
@@ -113,8 +134,25 @@ class ConstraintGenerator:
             raise ValueError("release_keypoints not found in output")
         # convert into list of ints
         release_keypoints = release_keypoints['release_keypoints'].replace("[", "").replace("]", "").split(",")
-        release_keypoints = [int(x.strip()) for x in release_keypoints]
-        data_dict['release_keypoints'] = release_keypoints
+        
+        parsed_release_keypoints = []
+        for x in release_keypoints:
+             # 清理字符串
+            clean_x = x.split('#')[0].strip().lower()
+            if not clean_x or clean_x == 'none':
+                parsed_release_keypoints.append(-1)
+            else:
+                try:
+                    parsed_release_keypoints.append(int(clean_x))
+                except ValueError:
+                    import re
+                    match = re.search(r'-?\d+', clean_x)
+                    if match:
+                        parsed_release_keypoints.append(int(match.group()))
+                    else:
+                        parsed_release_keypoints.append(-1)
+
+        data_dict['release_keypoints'] = parsed_release_keypoints
         return data_dict
 
     def _save_metadata(self, metadata):
